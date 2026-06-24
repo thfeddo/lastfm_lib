@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Last.fm Now Playing</title>
+
+<style>
+:root{
+    --bg:#191919;
+    --card:#2a2a2a;
+    --border:#3a3a3a;
+    --text:#ffffff;
+    --muted:#a3a3a3;
+    --accent:#ef4444;
+}
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    background:transparent;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color:var(--text);
+    padding:12px;
+}
+
+.card{
+    width:100%;
+    max-width:420px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:16px;
+    display:flex;
+    gap:16px;
+    align-items:center;
+    box-shadow:0 4px 20px rgba(0,0,0,.25);
+}
+
+.cover{
+    width:110px;
+    height:110px;
+    object-fit:cover;
+    border-radius:14px;
+    flex-shrink:0;
+    background:#111;
+}
+
+.content{
+    min-width:0;
+    flex:1;
+}
+
+.status{
+    color:var(--accent);
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:8px;
+}
+
+.track{
+    font-size:18px;
+    font-weight:700;
+    line-height:1.2;
+    margin-bottom:6px;
+    word-break:break-word;
+}
+
+.artist{
+    color:#d4d4d4;
+    font-size:15px;
+    margin-bottom:4px;
+}
+
+.album{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:12px;
+}
+
+.lastfm-link{
+    display:inline-block;
+    text-decoration:none;
+    color:white;
+    background:var(--accent);
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    transition:.2s;
+}
+
+.lastfm-link:hover{
+    transform:translateY(-1px);
+}
+
+.hidden{
+    display:none;
+}
+
+.offline{
+    text-align:center;
+    width:100%;
+    color:var(--muted);
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="card" id="card">
+
+```
+<img id="cover" class="cover"
+     src=""
+     alt="Album Cover">
+
+<div class="content">
+
+    <div class="status">
+        🎵 Escuchando ahora
+    </div>
+
+    <div class="track" id="track">
+        Cargando...
+    </div>
+
+    <div class="artist" id="artist"></div>
+
+    <div class="album" id="album"></div>
+
+    <a id="lastfmLink"
+       class="lastfm-link"
+       href="#"
+       target="_blank">
+        Abrir en Last.fm
+    </a>
+
+</div>
+```
+
+</div>
+
+<script>
+
+const USERNAME = "th-feddo";
+const API_KEY = "19cdee60be96a73040a9369f21683807";
+
+async function updateNowPlaying(){
+
+    try{
+
+        const url =
+        `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${USERNAME}&api_key=${API_KEY}&format=json&limit=1`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const track = data.recenttracks.track[0];
+
+        const isPlaying =
+            track["@attr"] &&
+            track["@attr"].nowplaying === "true";
+
+        if(!isPlaying){
+            document.getElementById("card").innerHTML =
+            `
+            <div class="offline">
+                🎵 No hay reproducción activa
+            </div>
+            `;
+            return;
+        }
+
+        document.getElementById("track").textContent =
+            track.name;
+
+        document.getElementById("artist").textContent =
+            track.artist["#text"];
+
+        document.getElementById("album").textContent =
+            track.album["#text"] || "Álbum desconocido";
+
+        document.getElementById("cover").src =
+            track.image[3]["#text"] ||
+            track.image[2]["#text"];
+
+        document.getElementById("lastfmLink").href =
+            `https://www.last.fm/user/${USERNAME}`;
+
+    }
+    catch(error){
+
+        document.getElementById("card").innerHTML =
+        `
+        <div class="offline">
+            Error al conectar con Last.fm
+        </div>
+        `;
+
+        console.error(error);
+    }
+}
+
+updateNowPlaying();
+setInterval(updateNowPlaying,10000);
+
+</script>
+
+</body>
+</html>
